@@ -1,11 +1,15 @@
 import express from 'express'
 import sqlite from 'sqlite3'
 import { join, dirname } from 'path'
+import cors from 'cors'
 
 
 const sqlite3 = sqlite.verbose();
 
 const app = express();
+
+app.use(cors());
+
 const PORT = 3001;
 const DB_PATH = join(dirname("."), "database.db");
 
