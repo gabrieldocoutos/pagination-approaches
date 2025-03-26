@@ -9,6 +9,12 @@ const app = express();
 const PORT = 3001;
 const DB_PATH = join(dirname("."), "database.db");
 
+type User = { 
+  id: number;
+  name: string;
+  email: string;
+}
+
 // Connect to SQLite database
 const db = new sqlite3.Database(DB_PATH, (err) => {
   if (err) {
@@ -22,7 +28,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
 app.use(express.json());
 
 // Endpoint to fetch all users
-app.get("/users", (req, res) => {
+app.get("/offset", (req, res) => {
     const limit = req.query.limit ?? 10;
     const offset  = req.query.offset ?? 0;
 
@@ -33,6 +39,23 @@ app.get("/users", (req, res) => {
     }
     res.json({ users: rows });
   });
+});
+
+
+
+app.get("/cursor", (req, res) => {
+  const next_cursor = req.query.next_cursor ?? 0;
+  
+
+db.all(`SELECT * FROM users WHERE id > ${next_cursor} LIMIT 10`, [], (err, rows: User[]) => {
+  if (err) {
+    res.status(500).json({ error: err.message });
+    return;
+  }
+
+  
+  res.json({ users: rows, next_cursor: rows.length > 0 ? rows[rows.length - 1].id : next_cursor, prev_cursor: next_cursor - 10 });
+});
 });
 
 // Endpoint to add a new user
