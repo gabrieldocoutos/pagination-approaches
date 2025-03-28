@@ -1,51 +1,54 @@
 import { useEffect, useState } from "react";
+import { UserCard } from "./components/card";
+import { User } from "./domain/user";
+import "./cursor.css";
+import { Button } from "@mantine/core";
 
-
-type User = {
-    id: number;
-    name: string;
-    email: string;
-}
-
-type ApiResponse =  {
-    users: User[];
-    prev_cursor: number;
-    next_cursor: number;
-}
+type ApiResponse = {
+	users: User[];
+	prev_cursor: number;
+	next_cursor: number;
+};
 
 async function fetchUsers(cursor: number) {
-    const response = await fetch(`http://localhost:3001/cursor?next_cursor=${cursor}`);
-    return response.json();
+	const response = await fetch(
+		`http://localhost:3001/cursor?next_cursor=${cursor}`
+	);
+	return response.json();
 }
-
 
 function Cursor() {
+	const [response, setResponse] = useState<null | ApiResponse>(null);
+	const [cursor, setCursor] = useState(0);
 
-    const [response, setResponse] = useState<null | ApiResponse>(null);
-    const [cursor, setCursor] = useState(0);
+	useEffect(() => {
+		fetchUsers(cursor).then((data: ApiResponse) =>
+			setResponse((prevState) => ({
+				users: prevState?.users
+					? [...prevState.users, ...data.users]
+					: data.users,
+				next_cursor: data.next_cursor,
+				prev_cursor: data.prev_cursor,
+			}))
+		);
+	}, [cursor]);
 
-    useEffect(() => {
-        fetchUsers(cursor).then((data: ApiResponse) => setResponse(data))
-    }, [cursor])
+	if (response === null) {
+		return <h1>Loading...</h1>;
+	}
 
-    console.log(response)
+	const foo = response.users.slice();
 
-    if (response === null) {
-        return <h1>Loading...</h1>
-    }
-    
-    return (
-        <div>
-            {response.users.map(user => <div key={user.id}>
-                    <h2>name: {user.name}</h2>
-                    <p>email: {user.email}</p>
-                    <span>id: {user.id}</span>
-                    </div>)}
-
-            <button onClick={() => setCursor(response.prev_cursor)}>Previous</button>
-            <button onClick={() => setCursor(response.next_cursor)}>Next</button>
-        </div>
-    )
+	return (
+		<div>
+			<div className={"grid"}>
+				{foo.map((user) => (
+					<UserCard key={user.id} user={user} />
+				))}
+			</div>
+			<Button onClick={() => setCursor(response.next_cursor)}>load more</Button>
+		</div>
+	);
 }
 
-export { Cursor }
+export { Cursor };
