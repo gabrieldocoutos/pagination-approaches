@@ -15,14 +15,15 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
     }
   });
 
-for (let i = 0; i< 5000; i++) {
+for (let i = 0; i < 15000; i++) {
 
     const randomName = faker.person.fullName(); // Rowan Nikolaus
     const randomEmail = faker.internet.email(); // Kassandra.Haley@erich.biz
+    const randomAvatarUrl = faker.image.avatar(); // https://i.pravatar.cc/150?img=1
     console.log({ randomEmail, randomName })
 
-    const query = "INSERT INTO users (name, email) VALUES (?, ?)";
-    db.run(query, [randomName, randomEmail], function (err) {
+    const query = "INSERT INTO users (name, email, avatar_url) VALUES (?, ?, ?)";
+    db.run(query, [randomName, randomEmail, randomAvatarUrl], function (err) {
         if (err) {
             console.log({ err })
         }
