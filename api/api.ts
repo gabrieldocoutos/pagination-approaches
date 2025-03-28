@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import sqlite from "sqlite3";
 import { join, dirname } from "path";
 import cors from "cors";
@@ -31,7 +31,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
 app.use(express.json());
 
 // Endpoint to fetch all users
-app.get("/offset", (req, res) => {
+app.get("/offset", (req: any, res: any) => {
 	if (!req.query.page) {
 		return res.status(400).json({ error: "page query param is required" });
 	}
@@ -68,7 +68,7 @@ app.get("/offset", (req, res) => {
 });
 
 app.get("/cursor", (req, res) => {
-	const next_cursor = req.query.next_cursor ?? 0;
+	const next_cursor = req.query.next_cursor ? Number(req.query.next_cursor) : 0;
 
 	db.all(
 		`SELECT * FROM users WHERE id > ${next_cursor} LIMIT 5`,
@@ -89,7 +89,7 @@ app.get("/cursor", (req, res) => {
 });
 
 // Endpoint to add a new user
-app.post("/users", (req, res) => {
+app.post("/users", (req: any, res: any) => {
 	const { name, email } = req.body;
 	if (!name || !email) {
 		return res.status(400).json({ error: "Name and email are required" });
