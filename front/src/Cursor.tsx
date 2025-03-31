@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { UserCard } from "./components/card";
 import { User } from "./domain/user";
 import "./cursor.css";
-import { Button } from "@mantine/core";
 
 type ApiResponse = {
 	users: User[];
@@ -20,33 +19,60 @@ async function fetchUsers(cursor: number) {
 function Cursor() {
 	const [response, setResponse] = useState<null | ApiResponse>(null);
 	const [cursor, setCursor] = useState(0);
+	const [isLoading, setIsLoading] = useState(false);
+	const observerTarget = useRef(null);
 
 	useEffect(() => {
-		fetchUsers(cursor).then((data: ApiResponse) =>
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const first = entries[0];
+				if (first.isIntersecting && !isLoading && response?.next_cursor) {
+					setCursor(response.next_cursor);
+					setIsLoading(true);
+				}
+			},
+			{ threshold: 0.1 }
+		);
+
+		const currentTarget = observerTarget.current;
+		if (currentTarget) {
+			observer.observe(currentTarget);
+		}
+
+		return () => {
+			if (currentTarget) {
+				observer.unobserve(currentTarget);
+			}
+		};
+	}, [isLoading, response?.next_cursor]);
+
+	useEffect(() => {
+		fetchUsers(cursor).then((data: ApiResponse) => {
 			setResponse((prevState) => ({
 				users: prevState?.users
 					? [...prevState.users, ...data.users]
 					: data.users,
 				next_cursor: data.next_cursor,
 				prev_cursor: data.prev_cursor,
-			}))
-		);
+			}));
+			setIsLoading(false);
+		});
 	}, [cursor]);
 
 	if (response === null) {
 		return <h1>Loading...</h1>;
 	}
 
-	const foo = response.users.slice();
-
 	return (
 		<div>
 			<div className={"grid"}>
-				{foo.map((user) => (
+				{response.users.map((user) => (
 					<UserCard key={user.id} user={user} />
 				))}
 			</div>
-			<Button onClick={() => setCursor(response.next_cursor)}>load more</Button>
+			<div ref={observerTarget} style={{ height: "20px" }}>
+				{isLoading && <p>Loading more users...</p>}
+			</div>
 		</div>
 	);
 }

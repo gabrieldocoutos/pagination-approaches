@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import sqlite from "sqlite3";
 import { join, dirname } from "path";
 import cors from "cors";
